@@ -1,9 +1,7 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity >=0.5.0 <0.6.0;
 
 contract ZombieFactory {
 
-    // declare our event here
     event NewZombie(uint zombieId, string name, uint dna);
 
     uint dnaDigits = 16;
@@ -16,9 +14,13 @@ contract ZombieFactory {
 
     Zombie[] public zombies;
 
-    function _createZombie(string memory _name, uint _dna) private {
+    mapping (uint => address) public zombieToOwner;
+    mapping (address => uint) ownerZombieCount;
+
+    function _createZombie(string memory _name, uint _dna) internal {
         uint id = zombies.push(Zombie(_name, _dna)) - 1;
-        // and fire it here
+        zombieToOwner[id] = msg.sender;
+        ownerZombieCount[msg.sender]++;
         emit NewZombie(id, _name, _dna);
     }
 
@@ -28,7 +30,9 @@ contract ZombieFactory {
     }
 
     function createRandomZombie(string memory _name) public {
+        require(ownerZombieCount[msg.sender] == 0);
         uint randDna = _generateRandomDna(_name);
+        randDna = randDna - randDna % 100;
         _createZombie(_name, randDna);
     }
 
